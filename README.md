@@ -6,4 +6,4 @@
 NDA required for technical access.
 
 © Caleb Beardsley 2026 | Rockford, MI
-# calebbeardsley.github.io
+

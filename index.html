@@ -2,63 +2,65 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Caleb Beardsley | oO0+ Symphony <link rel="manifest" href="manifest.json">
-</title>
+<title>Caleb Beardsley | oO0+ Symphony</title>
 <meta name="viewport" content="width=device-width">
+<link rel="manifest" href="manifest.json">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font:14px/1.4 'Courier New',monospace;background:#000;color:#0f0;overflow:hidden}
 .console{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center,#000 0%,#0a0a1a 100%)}
 .header{position:absolute;top:20px;left:50%;transform:translateX(-50%);text-align:center;text-shadow:0 0 20px #0f0}
 h1{font-size:28px;letter-spacing:6px}
-.preset-btn{position:absolute;top:90px;font-size:12px;padding:8px 16px;background:rgba(0,20,0,0.8);border:1px solid #0f0;color:#0f0;cursor:pointer;transition:all 0.3s}
+#unlock{position:absolute;top:120px;left:50%;transform:translateX(-50%);padding:12px 24px;background:rgba(0,255,0,0.3);border:2px solid #0f0;color:#0f0;font-family:inherit;font-size:14px;cursor:pointer;display:none;transition:all 0.3s}
+#unlock:hover{background:rgba(0,255,0,0.5);box-shadow:0 0 30px #0f0}
+.preset-btn{position:absolute;top:170px;font-size:12px;padding:8px 16px;background:rgba(0,20,0,0.8);border:1px solid #0f0;color:#0f0;cursor:pointer;transition:all 0.3s}
 .preset-btn:hover{box-shadow:0 0 20px #0f0;background:rgba(0,50,0,0.9)}
 #demo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90vmin;height:90vmin;border:2px solid #0f0;box-shadow:0 0 100px rgba(0,255,0,0.3)}
 .status{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:20px;font-size:11px}
 .stat{background:rgba(0,0,0,0.7);padding:8px 12px;border:1px solid #0f0}
 .footer{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);color:#444;font-size:10px}
+@media (max-width:768px){h1{font-size:22px}.preset-btn{top:160px;font-size:11px;padding:6px 12px}}
 </style>
 </head>
 <body>
 <div class="console">
   <div class="header">
     <h1>oO0+ SYMPHONY ENGINE</h1>
-    <div>Particles = Musical Notes | Black Hole Singularity</div>
+    <div style="font-size:12px;margin-top:5px">Particles = Musical Notes | Black Hole Singularity</div>
+    <button id="unlock">► TAP TO UNLEASH SYMPHONY</button>
   </div>
   
   <button class="preset-btn" style="left:20px" onclick="loadPreset(0)">Beethoven 5th</button>
   <button class="preset-btn" style="left:140px" onclick="loadPreset(1)">Bach C Major</button>
-  <button class="preset-btn" style="left:260px" onclick="loadPreset(2)">Moonlight Sonata</button>
-  <button class="preset-btn" style="left:400px" onclick="loadPreset(3)">Toccata Fugue</button>
+  <button class="preset-btn" style="left:260px" onclick="loadPreset(2)">Moonlight</button>
+  <button class="preset-btn" style="left:400px" onclick="loadPreset(3)">Toccata</button>
   <button class="preset-btn" style="left:540px" onclick="loadPreset(4)">Symphony 9</button>
-  <button class="preset-btn" style="right:20px" onclick="loadPreset(5)">Random Gen</button>
+  <button class="preset-btn" style="right:20px" onclick="loadPreset(5)">Random</button>
   
   <canvas id="demo" width="900" height="900"></canvas>
   
   <div class="status">
-    <div class="stat">Notes: <span id="notes">512</span></div>
+    <div class="stat">Notes: <span id="notes">0</span></div>
     <div class="stat">Singularity: <span id="sink">87%</span></div>
-    <div class="stat">Preset: <span id="preset">Beethoven</span></div>
+    <div class="stat">Preset: <span id="preset">-</span></div>
   </div>
   
-  <div class="footer">© Caleb Beardsley 2026 | Compression Engine Sonification</div>
+  <div class="footer">© Caleb Beardsley 2026 | Rockford, Michigan | Compression Engine Sonification</div>
 </div>
 
 <script>
-// oO0+ Musical Black Hole - Particles = Symphony Notes
 const canvas=document.getElementById('demo');
 const ctx=canvas.getContext('2d');
-const audioCtx=new AudioContext();
 let t=0, particles=[], preset=0, sinkRate=0.1;
+let audioCtx, audioUnlocked=false;
 
-// Beethoven/Bach note sequences (frequency tables)
 const presets=[
-  [[220,246,277,293,329,349,392,440,493,523],0.3,1.8], // Beethoven 5th
-  [[261,277,293,311,349,369,392,415,440,466],0.25,1.5], // Bach C Major
-  [[130,146,155,174,185,196,207,220,233,247],0.4,2.2], // Moonlight
-  [[123,138,155,164,185,196,207,220,233,261],0.35,1.9], // Toccata
-  [[196,220,246,277,293,329,369,392,440,493],0.28,2.0], // Symphony 9
-  [[110,123,138,146,164,185,207,220,246,277],0.2,1.2]  // Random
+  [[220,246,277,293,329,349,392,440,493,523],0.35,1.8,'Beethoven 5th'],
+  [[261,277,293,311,349,369,392,415,440,466],0.28,1.5,'Bach C Major'],
+  [[130,146,155,174,185,196,207,220,233,247],0.45,2.2,'Moonlight'],
+  [[123,138,155,164,185,196,207,220,233,261],0.38,1.9,'Toccata'],
+  [[196,220,246,277,293,329,369,392,440,493],0.32,2.0,'Symphony 9'],
+  [[110,123,138,146,164,185,207,220,246,277],0.22,1.2,'Random']
 ];
 
 let currentNotes=presets[0][0], noteSpeed=presets[0][1], decay=presets[0][2];
@@ -73,14 +75,11 @@ class NoteParticle {
   }
   
   update() {
-    // Black hole attraction
-    const pull=0.02+(1-this.life)*sinkRate;
-    this.angle+=(Math.sin(t*0.5+this.freq*0.001)*0.02);
+    const pull=0.025+(1-this.life)*sinkRate;
+    this.angle+=(Math.sin(t*0.5+this.freq*0.001)*0.025);
     this.radius-=pull;
-    this.life-=0.008;
-    this.size=Math.max(0.5,this.life*4);
-    
-    // Play note when birthing
+    this.life-=0.01;
+    this.size=Math.max(0.5,this.life*5);
     if(this.life>0.95) playNote(this.freq);
   }
   
@@ -88,98 +87,106 @@ class NoteParticle {
     const x=canvas.width/2 + Math.cos(this.angle)*this.radius;
     const y=canvas.height/2 + Math.sin(this.angle)*this.radius;
     
-    // Note color = frequency
-    const hue=(this.freq*10)%360;
+    const hue=(this.freq*8)%360;
     ctx.save();
     ctx.translate(x,y);
-    ctx.globalAlpha=this.life*0.8;
+    ctx.globalAlpha=this.life*0.9;
     ctx.shadowColor=`hsla(${hue},100%,60%,1)`;
-    ctx.shadowBlur=25;
+    ctx.shadowBlur=30;
     
-    // Musical particle glow
-    const grad=ctx.createRadialGradient(0,0,0,0,0,this.size*10);
+    const grad=ctx.createRadialGradient(0,0,0,0,0,this.size*12);
     grad.addColorStop(0,`hsla(${hue},100%,70%,${this.life})`);
     grad.addColorStop(1,'transparent');
     ctx.fillStyle=grad;
     ctx.beginPath();
-    ctx.arc(0,0,this.size*10,0,Math.PI*2);
+    ctx.arc(0,0,this.size*12,0,Math.PI*2);
     ctx.fill();
     ctx.restore();
   }
 }
 
-// Pure synthesis - no samples
-function playNote(freq) {
-  const osc=audioCtx.createOscillator();
-  const gain=audioCtx.createGain();
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.frequency.value=freq;
-  osc.type='sawtooth';
-  gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+decay);
-  osc.start(audioCtx.currentTime);
-  osc.stop(audioCtx.currentTime+decay);
+function initAudio() {
+  audioCtx=new AudioContext();
 }
 
+function playNote(freq) {
+  if(!audioCtx || !audioUnlocked || audioCtx.state==='suspended') return;
+  
+  try {
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value=freq;
+    osc.type='sawtooth';
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+decay*0.8);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime+decay*0.8);
+  } catch(e) {}
+}
+
+document.getElementById('unlock').onclick=()=>{
+  initAudio();
+  document.getElementById('unlock').style.display='none';
+  audioUnlocked=true;
+  loadPreset(0);
+};
+
 function loadPreset(i) {
+  if(!audioUnlocked) return;
   preset=i;
   currentNotes=presets[i][0];
   noteSpeed=presets[i][1];
   decay=presets[i][2];
-  document.getElementById('preset').textContent=['Beethoven','Bach','Moonlight','Toccata','Symphony','Random'][i];
-  particles.forEach(p=>p.life=0); // Clear old notes
+  document.getElementById('preset').textContent=presets[i][3];
+  particles.forEach(p=>p.life=0);
 }
 
-// Render symphony
 function render() {
   t+=0.016;
-  ctx.fillStyle='rgba(0,5,20,0.15)';
+  ctx.fillStyle='rgba(0,5,20,0.18)';
   ctx.fillRect(0,0,canvas.width,canvas.height);
   
-  // Black hole singularity
   const centerX=canvas.width/2, centerY=canvas.height/2;
   ctx.save();
   ctx.translate(centerX,centerY);
   ctx.shadowColor='#0f0';
-  ctx.shadowBlur=50;
+  ctx.shadowBlur=60;
   
-  // Event horizon glow
-  const grad=ctx.createRadialGradient(0,0,0,0,0,100);
-  grad.addColorStop(0,'rgba(0,255,0,0.9)');
-  grad.addColorStop(0.7,'rgba(0,50,0,0.6)');
+  const grad=ctx.createRadialGradient(0,0,0,0,0,120);
+  grad.addColorStop(0,'rgba(0,255,0,0.95)');
+  grad.addColorStop(0.6,'rgba(0,80,0,0.7)');
   grad.addColorStop(1,'transparent');
   ctx.fillStyle=grad;
   ctx.beginPath();
-  ctx.arc(0,0,100,0,Math.PI*2);
+  ctx.arc(0,0,120,0,Math.PI*2);
   ctx.fill();
   ctx.restore();
   
-  // Spawn musical particles
-  if(particles.length<512 && Math.random()<0.3) {
+  if(particles.length<512 && Math.random()<0.35) {
     particles.push(new NoteParticle());
   }
   
-  // Update & draw notes
   for(let i=particles.length-1;i>=0;i--) {
     particles[i].update();
     particles[i].draw();
-    if(particles[i].radius<50 || particles[i].life<0) {
+    if(particles[i].radius<60 || particles[i].life<0) {
       particles.splice(i,1);
     }
   }
   
-  // Update stats
   document.getElementById('notes').textContent=particles.length;
-  document.getElementById('sink').textContent=(87+Math.sin(t)*5).toFixed(0)+'%';
+  document.getElementById('sink').textContent=(87+Math.sin(t*1.2)*6).toFixed(0)+'%';
   
   requestAnimationFrame(render);
 }
 
-// Init first preset
-loadPreset(0);
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+
 render();
 </script>
-  <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>

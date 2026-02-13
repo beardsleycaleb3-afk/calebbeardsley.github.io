@@ -1,0 +1,14 @@
+{
+  "name": "Caleb Beardsley oO0+",
+  "short_name": "oO0+",
+  "description": "Symphony Compression Engine",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000",
+  "theme_color": "#0f0",
+  "icons": [{
+    "src": "icon.png",
+    "sizes": "192x192",
+    "type": "image/png"
+  }]
+}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CORE – minimal</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; height: 100%; overflow: hidden;
+      background: #000; font-family: 'Courier New', monospace;
+    }
+    #hud {
+      position: absolute; top: 12px; left: 12px; color: #0f0;
+      font-size: 14px; pointer-events: none; user-select: none;
+      text-shadow: 0 0 6px #0f0;
+    }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+
+<div id="hud">RPM: <span id="rpm">0</span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script>
+// ─── minimal rotating core ────────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
+
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 1000);
+camera.position.set(0, 0, 12);
+
+const renderer = new THREE.WebGLRenderer({antialias: false});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+
+// ─── three wireframe spheres ──────────────────────────────────────────────
+const core = new THREE.Mesh(
+  new THREE.SphereGeometry(1.4, 12, 10),
+  new THREE.MeshBasicMaterial({color: 0x00ff44, wireframe: true})
+);
+scene.add(core);
+
+const mid = new THREE.Mesh(
+  new THREE.SphereGeometry(2.8, 16, 12),
+  new THREE.MeshBasicMaterial({color: 0xff8800, wireframe: true})
+);
+scene.add(mid);
+
+const outer = new THREE.Mesh(
+  new THREE.SphereGeometry(5.6, 20, 14),
+  new THREE.MeshBasicMaterial({color: 0x00ff88, wireframe: true, transparent: true, opacity: 0.25})
+);
+scene.add(outer);
+
+// ─── very faint glow (optional visual breathing room) ─────────────────────
+const glow = new THREE.Mesh(
+  new THREE.SphereGeometry(6.2, 24, 16),
+  new THREE.MeshBasicMaterial({color: 0x004400, transparent: true, opacity: 0.08})
+);
+scene.add(glow);
+
+let t = 0;
+let rpm = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  t += 0.016;
+
+  // gentle RPM wander (0 → \~180 000 max)
+  rpm = 90000 + 90000 * Math.sin(t * 0.3);
+  document.getElementById('rpm').textContent = Math.floor(rpm).toLocaleString();
+
+  // counter-rotation
+  core.rotation.y  += rpm / 1_800_000;     // fast positive y
+  mid.rotation.x   -= rpm / 3_600_000;     // slower negative x
+  outer.rotation.z += rpm / 7_200_000;     // very slow positive z
+
+  // very subtle breathing scale on core
+  const pulse = 1 + 0.04 * Math.sin(t * 1.8 + rpm / 500_000);
+  core.scale.setScalar(pulse);
+  mid.scale.setScalar(1 + 0.02 * Math.sin(t * 1.2 + rpm / 400_000));
+
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+animate();
+</script>
+</body>
+</html>
